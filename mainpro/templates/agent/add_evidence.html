@@ -1,0 +1,20 @@
+<!-- add_evidence.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Evidence</title>
+</head>
+<body>
+    <h1>Add Evidence for Case: {{ case.title }}</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="file">File:</label>
+        <input type="file" name="file" required><br>
+        <label for="description">Description:</label>
+        <textarea name="description" required></textarea><br>
+        <button type="submit">Add Evidence</button>
+    </form>
+</body>
+</html>

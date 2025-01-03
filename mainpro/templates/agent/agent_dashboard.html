@@ -1,0 +1,19 @@
+<!-- agent_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard</title>
+</head>
+<body>
+    <h1>Agent Dashboard</h1>
+    <h2>Assigned Cases</h2>
+    <ul>
+        {% for case in cases %}
+            <li>{{ case.title }} - <a href="{% url 'case_details' case.id %}">View Case Details</a> - 
+                <a href="{% url 'update_case_status' case.id %}">Update Status</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

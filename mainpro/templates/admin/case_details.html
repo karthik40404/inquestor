@@ -1,0 +1,18 @@
+<!-- case_details.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Details</title>
+</head>
+<body>
+    <h1>{{ case.title }}</h1>
+    <p><strong>Description:</strong> {{ case.description }}</p>
+    <p><strong>Client:</strong> {{ case.client.user.username }}</p>
+    <p><strong>Assigned Agent:</strong> {% if case.assigned_agent %}{{ case.assigned_agent.user.username }}{% else %}Not assigned{% endif %}</p>
+    <p><strong>Category:</strong> {{ case.category.c_name }}</p>
+    <p><strong>Status:</strong> {{ case.status }}</p>
+    <a href="{% url 'list_cases' %}">Back to Cases List</a>
+</body>
+</html>
