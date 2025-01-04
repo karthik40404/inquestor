@@ -1,52 +1,69 @@
 from django.shortcuts import render,redirect, get_object_or_404
 from django.contrib.auth import authenticate,login,logout
 from django.contrib import messages
+from django.core.mail import send_mail
 from .models import *
+import random,string
 
 # Create your views here.
 def log(req):
-    
-    if req.user.is_authenticated:
-        if req.user.is_superuser:
-            return redirect(admdash)
-        
-        try:
-            agent = Agent.objects.get(user=req.user)
-            return redirect(agent_dashboard)
-        except Agent.DoesNotExist:
-            pass
-        
-        try:
-            client = Client.objects.get(user=req.user)
-            return redirect(client_dashboard)
-        except Client.DoesNotExist:
-            pass
+    # Redirect based on session roles
+    if 'admin' in req.session:
+        return redirect(admdash)  # Admin dashboard
+    if 'agent' in req.session:
+        return redirect(agent_dashboard)  # Agent dashboard
+    if 'user' in req.session:
+        return redirect(uhome)  # User home
 
-        messages.warning(req, "You do not have access to any specific dashboard.")
-        return redirect(client_dashboard)
-    
-    if req.method == "POST":
-        email = req.POST['email']
+    # Handle POST request for login
+    if req.method == 'POST':
+        uname = req.POST['uname']
         psw = req.POST['psw']
-        
-        user = authenticate(username=email, password=psw)
-        
-        if user is not None:
-            if user.is_active:
-                login(req, user)
-                return redirect(log)  
-            else:
-                messages.warning(req, "Your account is inactive. Please contact support.")
-                return redirect(log)
+        data = authenticate(username=uname, password=psw)
+        print(data)
+
+        if data:
+            login(req, data)
+
+            # Check roles and redirect accordingly
+            if data.is_superuser:
+                req.session['admin'] = uname  # Set admin session
+                return redirect(admdash)
+
+            # Check if the user is an agent
+            try:
+                agent = Agent.objects.get(user=data)  # Assuming Agent model has a `user` ForeignKey
+                req.session['agent'] = uname  # Set agent session
+                return redirect(agent_dashboard)
+            except Agent.DoesNotExist:
+                pass
+
+            # If neither admin nor agent, assume a regular user
+            req.session['user'] = uname  # Set user session
+            return redirect(uhome)
+
         else:
-            messages.error(req, "Invalid email or password. Please try again.")
+            # Authentication failed
+            messages.warning(req, "Incorrect username or password.")
             return redirect(log)
-        
+
+    # Render login page for GET request
     return render(req, 'login.html')
 
 def lout(req):
     logout(req)
     return redirect('log')
+
+def reg(req):
+    if req.method=="POST":
+        name=req.POST['name']
+        email=req.POST['email']
+        psw=req.POST['psw']
+        data=User.objects.create_user(first_name=name,email=email,username=email,password=psw)
+        data.save()
+        return redirect(log)
+    else:
+        return render(req,'userreg.html')
 
 def admdash(req):
     cases = Case.objects.all()
@@ -55,15 +72,24 @@ def admdash(req):
     categories = CaseCategory.objects.all()
     return render(req, 'admin/admindash.html', {'cases': cases,'agents': agents,'clients': clients,'categories': categories,})
 
+def generate_random_password(length=8):
+    """Generate a random alphanumeric password."""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
 def add_agent(req):
     if req.method == 'POST':
         username = req.POST['username']
+        email = req.POST['email']
         phone = req.POST['phone']
         address = req.POST['address']
         
+        # Generate a random password
+        random_password = generate_random_password()
+        
         # Create the user first
-        user = User.objects.create_user(username=username)
-        user.set_password('defaultpassword') 
+        user = User.objects.create_user(username=username, email=email)
+        user.set_password(random_password) 
         user.save()
         
         # Create agent profile
@@ -74,8 +100,23 @@ def add_agent(req):
             is_active=True
         )
         agent.save()
-        messages.success(req, 'Agent added successfully!')
+        
+        # Send email with the random password
+        try:
+            send_mail(
+                subject="Welcome to Detective Management System",
+                message=f"Hi {username},\n\nYour account has been created. Here are your login details:\n\n"
+                        f"Username: {username}\nPassword: {random_password}\n\nPlease log in and change your password as soon as possible.",
+                from_email="karthik.kalarimadom@gmail.com", 
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            messages.success(req, 'Agent added successfully, and login details sent to their email!')
+        except Exception as e:
+            messages.error(req, f"Agent added, but email could not be sent. Error: {e}")
+        
         return redirect(admdash)  
+    
     return render(req, 'admin/add_agent.html')
 
 def add_case_category(req):

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 class Client(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.TextField()
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
 
@@ -30,7 +30,7 @@ class Evidence(models.Model):
     description = models.TextField(blank=True)
 
 class Agent(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="agent_profile")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
