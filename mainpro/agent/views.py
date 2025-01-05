@@ -1,11 +1,24 @@
 from django.shortcuts import render,redirect, get_object_or_404
-from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth import authenticate,login,logout,update_session_auth_hash
 from django.contrib import messages
 from django.core.mail import send_mail
 from .models import *
 import random,string
 
 # Create your views here.
+
+def landing_page(req):
+    if 'admin' in req.session:
+        return redirect('admdash')  # Redirect admin
+    if 'agent' in req.session:
+        return redirect('agent_dashboard')  # Redirect agent
+    if 'user' in req.session:
+        return redirect('client_dashboard')  # Redirect user
+    
+    case_categories = CaseCategory.objects.all()
+    return render(req, 'landing_page.html',{'case_categories': case_categories})  # Show landing page
+
+
 def log(req):
     # Redirect based on session roles
     if 'admin' in req.session:
@@ -13,13 +26,13 @@ def log(req):
     if 'agent' in req.session:
         return redirect(agent_dashboard)  # Agent dashboard
     if 'user' in req.session:
-        return redirect(uhome)  # User home
+        return redirect(client_dashboard)  # User home
 
     # Handle POST request for login
     if req.method == 'POST':
-        uname = req.POST['uname']
+        email = req.POST['email']
         psw = req.POST['psw']
-        data = authenticate(username=uname, password=psw)
+        data = authenticate(username=email, password=psw)
         print(data)
 
         if data:
@@ -27,20 +40,20 @@ def log(req):
 
             # Check roles and redirect accordingly
             if data.is_superuser:
-                req.session['admin'] = uname  # Set admin session
+                req.session['admin'] = email  # Set admin session
                 return redirect(admdash)
 
             # Check if the user is an agent
             try:
                 agent = Agent.objects.get(user=data)  # Assuming Agent model has a `user` ForeignKey
-                req.session['agent'] = uname  # Set agent session
+                req.session['agent'] = email  # Set agent session
                 return redirect(agent_dashboard)
             except Agent.DoesNotExist:
                 pass
 
             # If neither admin nor agent, assume a regular user
-            req.session['user'] = uname  # Set user session
-            return redirect(uhome)
+            req.session['user'] = email  # Set user session
+            return redirect(client_dashboard)
 
         else:
             # Authentication failed
@@ -180,6 +193,52 @@ def case_details(req, case_id):
         'case': case
     })
 
+def list_clients(req):
+    clients = Client.objects.all()
+    return render(req, 'admin/list_clients.html', {
+        'clients': clients
+    })
+
+def agent_dashboard(req):
+    cases = Case.objects.filter(assigned_agent=req.user)
+    
+    # Calculate statistics
+    total_cases = cases.count()
+    open_cases = cases.filter(status='Open').count()
+    closed_cases = cases.filter(status='Closed').count()
+    
+    return render(req, 'agent/agent_dashboard.html', {
+        'cases': cases,
+        'total_cases': total_cases,
+        'open_cases': open_cases,
+        'closed_cases': closed_cases,
+        'agent': req.user 
+    })  
+
+def change_password(req):
+    if req.method == 'POST':
+        current_password = req.POST['current_password']
+        new_password = req.POST['new_password']
+        confirm_password = req.POST['confirm_password']
+        
+        if new_password != confirm_password:
+            messages.error(req, "New passwords do not match.")
+            return redirect('change_password')  
+        
+        user = authenticate(req, username=req.user.username, password=current_password)
+        if user is not None:
+            user.set_password(new_password)
+            user.save()
+            
+            update_session_auth_hash(req, user)
+            messages.success(req, "Your password has been changed successfully!")
+            return redirect(agent_dashboard)  
+        else:
+            messages.error(req, "Current password is incorrect.")
+            return redirect(change_password)
+    
+    return render(req, 'agent/change_password.html')
+
 def add_client(req):
     if req.method == 'POST':
         username = req.POST['username']
@@ -188,7 +247,7 @@ def add_client(req):
         
         # Create the user
         user = User.objects.create_user(username=username)
-        user.set_password('defaultpassword')  # You can set a default password here
+        user.set_password('defaultpassword')  
         user.save()
         
         # Create client profile
@@ -200,19 +259,7 @@ def add_client(req):
         client.save()
         messages.success(req, 'Client added successfully!')
         return redirect(admdash)
-    return render(req, 'admin/add_client.html')
-
-def list_clients(req):
-    clients = Client.objects.all()
-    return render(req, 'admin/list_clients.html', {
-        'clients': clients
-    })
-
-def agent_dashboard(req):
-    cases = Case.objects.filter(assigned_agent=req.user)
-    return render(req, 'agent/agent_dashboard.html', {
-        'cases': cases
-    })
+    return render(req, 'agent/add_client.html')
 
 def update_case_status(req, case_id):
     case = get_object_or_404(Case, id=case_id)
@@ -253,3 +300,12 @@ def client_dashboard(req):
     cases = Case.objects.filter(client=client)
     return render(req, 'client/client_dashboard.html', {'cases': cases})
 
+def cases_by_category(req, category_id):
+    category = get_object_or_404(CaseCategory, id=category_id)
+
+    cases = Case.objects.filter(category=category)
+    
+    return render(req, 'cases_by_category.html', {
+        'category': category,
+        'cases': cases,
+    })

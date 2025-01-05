@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detective Management System</title>
+    {% load static %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+       body {
+        background: linear-gradient(to bottom, #000000, #1a1a1a);
+        color: #f8f9fa;
+        font-family: 'Courier New', Courier, monospace;
+        height: 100vh;
+        margin: 0;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .introduction {
+            text-align: center;
+            margin-top: 30px;
+            color: #f8f9fa;
+        }
+
+        .introduction img {
+            width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+        }
+
+        p {
+            font-size: 1.2em;
+            color: #dcdcdc;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 70vh;
+            object-fit: cover;
+            filter: brightness(50%);
+        }
+
+        .carousel-caption {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .carousel-caption h5 {
+            font-size: 2em;
+            color: #f1c40f;
+        }
+
+        .carousel-caption p {
+            font-size: 1.2em;
+            color: #dcdcdc;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .actions .btn {
+            text-decoration: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #f8f9fa;
+            background-color: #6c757d;
+            border: 2px solid #f1c40f;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .actions .btn:hover {
+            background-color: #f1c40f;
+            color: #000;
+        }
+
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            filter: invert(50%);
+        }
+
+        .carousel-control-prev,
+        .carousel-control-next {
+            transition: opacity 0.3s;
+        }
+
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            opacity: 0.7;
+        }
+
+        .logo {
+            max-width: 100%;
+            height: 250px; /* Adjusted height for logo */
+            padding: 15px 5px;
+            border-radius: 50%;
+        }
+
+        .category-list h2 {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 3em;
+            color: #f8f9fa;
+        }
+
+        .category-item {
+            background-color: #333;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .category-item:hover {
+            background-color: #f1c40f;
+            color: #000;
+        }
+
+        .category-item a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .category-item h5 {
+            font-size: 1em;
+        }
+
+        @media (max-width: 768px) {
+            .category-item {
+                margin-bottom: 15px;
+                padding: 10px;
+            }
+
+            .category-item h5 {
+                font-size: 1.2em;
+            }
+
+            .actions .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            .logo {
+                height: 150px;
+            }
+
+            .carousel-item img {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container container">
+        <img class="logo" src="{% static 'img/inquestor.png' %}" alt="Website Logo">
+        <div class="actions">
+            <a href="{% url 'log' %}" class="btn">Login</a>
+            <a href="{% url 'reg' %}" class="btn">Register</a>
+            <a href="#" class="btn">Contact</a>
+        </div>
+    </div>
+
+    <div class="introduction container">
+        <h1>Welcome to Inquestor Pvt Investigation</h1>
+        <p>Your one-stop solution for managing cases, clients, and agents efficiently.</p>
+    </div>
+    
+    <div class="landing-container">
+        <!-- Carousel Section -->
+        <div id="landingCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img src="{% static 'img/caseman.webp' %}" alt="Efficient Management">
+                    <div class="carousel-caption">
+                        <h5>Efficient Case Management</h5>
+                        <p>Track and manage cases with ease and efficiency.</p>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="{% static 'img/sherlock.jpg' %}" alt="Agent Management">
+                    <div class="carousel-caption">
+                        <h5>Empower Agents</h5>
+                        <p>Assign and monitor cases for optimal performance.</p>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="{% static 'img/clsa.jpg' %}" alt="Client Satisfaction">
+                    <div class="carousel-caption">
+                        <h5>Client Satisfaction</h5>
+                        <p>Ensure seamless collaboration with clients.</p>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#landingCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#landingCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+        
+        <div class="category-list container">
+            <h2>Case Categories</h2>
+            <div class="row">
+                {% for category in case_categories %}
+                    <div class="col-md-4">
+                        <div class="category-item">
+                            <a href="{% url 'cases_by_category' category.id %}" class="btn">
+                                <h5>{{ category.c_name }}</h5>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

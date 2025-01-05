@@ -2,9 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.log, name='log'), 
+    path('', views.landing_page, name='landing_page'), 
+    path('login/', views.log, name='log'),  
+    path('logout/', views.lout, name='lout'),  
     path('reg', views.reg, name='reg'), 
-    path('lout/', views.lout),
     path('admdash', views.admdash),
     path('add-agent/', views.add_agent, name='add_agent'),
     path('add-case-category/', views.add_case_category, name='add_case_category'),
@@ -15,6 +16,9 @@ urlpatterns = [
     path('clients/', views.list_clients, name='list_clients'),
     path('agent/dashboard/', views.agent_dashboard, name='agent_dashboard'),
     path('agent/update-status/<int:case_id>/', views.update_case_status, name='update_case_status'),
+    path('change-password/', views.change_password, name='change_password'),
     path('case/<int:case_id>/add-evidence/', views.add_evidence, name='add_evidence'),
     path('clientdash/', views.client_dashboard, name='client_dashboard'),
+    path('case-category/<int:category_id>/', views.cases_by_category, name='cases_by_category'),
+
 ]
