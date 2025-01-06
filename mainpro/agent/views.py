@@ -316,7 +316,8 @@ def cases_by_category(req, category_id):
 
 def user_home(req):
     categories = CaseCategory.objects.all() 
-    return render(req, 'client/userhome.html', {'categories': categories})
+    agents = Agent.objects.all()
+    return render(req, 'client/userhome.html', {'categories': categories,'agents': agents})
 
 def submit_case(req, category_id):
     category = get_object_or_404(CaseCategory, id=category_id)  
@@ -389,3 +390,22 @@ def send_message(req, case_id):
             return JsonResponse({"status": "success", "message": message.message, "timestamp": message.timestamp.strftime('%Y-%m-%d %H:%M:%S')})
 
     return JsonResponse({"status": "error", "message": "Message content is required."})
+
+def agent_profile(req, agent_id):
+    agent = get_object_or_404(Agent, id=agent_id)
+    cases = Case.objects.filter(assigned_agent=agent.user) 
+    return render(req, 'agent/agent_profile.html', {'agent': agent,'cases': cases,})
+
+def contact_page(req):
+    return render(req,'contact_page.html')
+
+def send_message(req):
+    if req.method=='POST':
+          name=req.POST['name']
+          email=req.POST['email']
+          message=req.POST['message']
+          data=Message.objects.create(name=name,email=email,message=message)
+          data.save()
+          return redirect(contact_page)
+    else:
+        return render(req,'contact_page.html')

@@ -5,6 +5,8 @@ urlpatterns = [
     path('', views.landing_page, name='landing_page'), 
     path('login/', views.log, name='log'),  
     path('logout/', views.lout, name='lout'),  
+    path('contact/', views.contact_page, name='contact'),
+    path('smessage',views.send_message),  
     path('reg', views.reg, name='reg'), 
     path('admdash', views.admdash),
     path('add-agent/', views.add_agent, name='add_agent'),
@@ -22,4 +24,5 @@ urlpatterns = [
     path('submit_case/<int:category_id>/', views.submit_case, name='submit_case'),
     path('user', views.user_home, name='user_home'),
     path('send_message/<int:case_id>/', views.send_message, name='send_message'),
+    path('agent/<int:agent_id>/', views.agent_profile, name='agent_profile'),
 ]

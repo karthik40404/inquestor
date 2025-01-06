@@ -46,3 +46,8 @@ class ChatMessage(models.Model):
     recipient = models.ForeignKey(User, related_name='recipient', on_delete=models.CASCADE)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class Message(models.Model):
+    name=models.TextField()
+    email=models.EmailField()
+    message=models.TextField()
