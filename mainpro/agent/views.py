@@ -4,7 +4,8 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from .models import *
 import random,string
-
+from django.conf import settings
+from django.http import JsonResponse
 # Create your views here.
 
 def landing_page(req):
@@ -13,7 +14,7 @@ def landing_page(req):
     if 'agent' in req.session:
         return redirect('agent_dashboard')  # Redirect agent
     if 'user' in req.session:
-        return redirect('client_dashboard')  # Redirect user
+        return redirect('user_home')  # Redirect user
     
     case_categories = CaseCategory.objects.all()
     return render(req, 'landing_page.html',{'case_categories': case_categories})  # Show landing page
@@ -26,7 +27,7 @@ def log(req):
     if 'agent' in req.session:
         return redirect(agent_dashboard)  # Agent dashboard
     if 'user' in req.session:
-        return redirect(client_dashboard)  # User home
+        return redirect(user_home)  # User home
 
     # Handle POST request for login
     if req.method == 'POST':
@@ -53,7 +54,7 @@ def log(req):
 
             # If neither admin nor agent, assume a regular user
             req.session['user'] = email  # Set user session
-            return redirect(client_dashboard)
+            return redirect(user_home)
 
         else:
             # Authentication failed
@@ -200,6 +201,7 @@ def list_clients(req):
     })
 
 def agent_dashboard(req):
+    agent = Agent.objects.get(user=req.user)
     cases = Case.objects.filter(assigned_agent=req.user)
     
     # Calculate statistics
@@ -207,13 +209,20 @@ def agent_dashboard(req):
     open_cases = cases.filter(status='Open').count()
     closed_cases = cases.filter(status='Closed').count()
     
+    # Fetch chat messages for each case
+    case_messages = {}
+    for case in cases:
+        messages = ChatMessage.objects.filter(case=case)
+        case_messages[case.id] = messages
+    
     return render(req, 'agent/agent_dashboard.html', {
         'cases': cases,
         'total_cases': total_cases,
         'open_cases': open_cases,
         'closed_cases': closed_cases,
-        'agent': req.user 
-    })  
+        'agent': req.user,
+        'case_messages': case_messages,
+    })
 
 def change_password(req):
     if req.method == 'POST':
@@ -295,11 +304,6 @@ def add_evidence(request, case_id):
         'case': case
     })
 
-def client_dashboard(req):
-    client = Client.objects.get(user=req.user)
-    cases = Case.objects.filter(client=client)
-    return render(req, 'client/client_dashboard.html', {'cases': cases})
-
 def cases_by_category(req, category_id):
     category = get_object_or_404(CaseCategory, id=category_id)
 
@@ -309,3 +313,79 @@ def cases_by_category(req, category_id):
         'category': category,
         'cases': cases,
     })
+
+def user_home(req):
+    categories = CaseCategory.objects.all() 
+    return render(req, 'client/userhome.html', {'categories': categories})
+
+def submit_case(req, category_id):
+    category = get_object_or_404(CaseCategory, id=category_id)  
+    agents = Agent.objects.filter(is_active=True)  
+
+    if req.method == 'POST':
+        description = req.POST.get('description') 
+        agent_id = req.POST.get('agent')
+        agent = Agent.objects.filter(id=agent_id).first() if agent_id else None
+        client = Client.objects.filter(user=req.user).first()
+        
+        # Handle file upload for evidence
+        evidence_file = req.FILES.get('evidence')  # Get uploaded file
+        evidence_description = req.POST.get('evidence')  # Get evidence description
+
+        if description and agent and client:
+            case = Case.objects.create(
+                client=client,
+                assigned_agent=agent.user,  
+                category=category,
+                description=description,
+                title=f"Case in {category.c_name}",
+            )
+            case.save()
+
+            # If there is evidence, save it
+            if evidence_file:
+                Evidence.objects.create(
+                    case=case,
+                    file=evidence_file,
+                    description=evidence_description,
+                )
+
+            # Send email notification
+            send_mail(
+                subject=f"New Case Assigned: {case.title}",
+                message=f"A new case has been assigned to you.\n\n"
+                        f"Category: {category.c_name}\n"
+                        f"Title: {case.title}\n"
+                        f"Description: {case.description}\n"
+                        f"Client: {client.user.username}\n\n"
+                        f"Please login to the system for more details.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[agent.user.email],
+            )
+            return redirect(user_home)  # URL name as a string
+        else:
+            error_message = "Please fill out all required fields."
+    else:
+        error_message = None
+
+    return render(req, 'client/submitcase.html', {
+        'category': category,
+        'agents': agents,
+        'error_message': error_message,
+    })
+
+def send_message(req, case_id):
+    case = get_object_or_404(Case, id=case_id)
+    
+    if req.method == 'POST':
+        message_content = req.POST.get('message')
+        if message_content:
+            message = ChatMessage.objects.create(
+                case=case,
+                sender=req.user,
+                recipient=case.assigned_agent, 
+                message=message_content
+            )
+            return JsonResponse({"status": "success", "message": message.message, "timestamp": message.timestamp.strftime('%Y-%m-%d %H:%M:%S')})
+
+    return JsonResponse({"status": "error", "message": "Message content is required."})

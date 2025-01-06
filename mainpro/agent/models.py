@@ -7,6 +7,10 @@ class Client(models.Model):
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
 
+class CaseCategory(models.Model):
+    c_name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
 class Case(models.Model):
     STATUS_CHOICES = [
         ('Open', 'Open'),
@@ -22,6 +26,7 @@ class Case(models.Model):
     assigned_agent = models.ForeignKey(
         User, limit_choices_to={'is_staff': True}, on_delete=models.SET_NULL, null=True, blank=True
     )
+    category = models.ForeignKey(CaseCategory, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Evidence(models.Model):
@@ -35,6 +40,9 @@ class Agent(models.Model):
     address = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
-class CaseCategory(models.Model):
-    c_name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
+class ChatMessage(models.Model):
+    case = models.ForeignKey(Case, on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipient = models.ForeignKey(User, related_name='recipient', on_delete=models.CASCADE)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)

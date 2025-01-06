@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Home - Inquestor</title>
+    {% load static %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .categories-container {
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .category-card {
+            background: #333;
+            border: 2px solid #f1c40f;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .category-card:hover {
+            background: #f1c40f;
+            color: #000;
+            transform: scale(1.05);
+        }
+
+        .category-card a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .chat-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: #000;
+            border: 2px solid #f1c40f;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-header {
+            background: #f1c40f;
+            color: #000;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .chat-body {
+            height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #222;
+        }
+
+        .chat-input {
+            display: flex;
+            border-top: 2px solid #f1c40f;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+            background: #333;
+            color: #f8f9fa;
+        }
+
+        .chat-input button {
+            background: #f1c40f;
+            border: none;
+            padding: 10px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background: #333;
+            color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">Welcome, {{ user.first_name }}</h1>
+        <p class="text-center">Select a category to submit your case:</p>
+        
+        <!-- Case Categories Section -->
+        <div class="categories-container row g-4">
+            {% for category in categories %}
+            <div class="col-md-4">
+                <div class="category-card">
+                    <a href="{% url 'submit_case' category.id %}">
+                        <h3>{{ category.c_name }}</h3>
+                        <p>{{ category.description }}</p>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Chat Box -->
+    <div class="chat-box">
+        <div class="chat-header">Live Chat</div>
+        <div class="chat-body">
+            <div class="message">Welcome to support! How can we help you?</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chatMessage" placeholder="Type your message...">
+            <button id="sendChat">Send</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Chat box functionality
+        const chatBody = document.querySelector('.chat-body');
+        const chatInput = document.getElementById('chatMessage');
+        const sendChat = document.getElementById('sendChat');
+
+        sendChat.addEventListener('click', () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                const newMessage = document.createElement('div');
+                newMessage.textContent = message;
+                newMessage.style.color = '#f8f9fa';
+                chatBody.appendChild(newMessage);
+                chatInput.value = '';
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

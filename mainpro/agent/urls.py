@@ -18,7 +18,8 @@ urlpatterns = [
     path('agent/update-status/<int:case_id>/', views.update_case_status, name='update_case_status'),
     path('change-password/', views.change_password, name='change_password'),
     path('case/<int:case_id>/add-evidence/', views.add_evidence, name='add_evidence'),
-    path('clientdash/', views.client_dashboard, name='client_dashboard'),
     path('case-category/<int:category_id>/', views.cases_by_category, name='cases_by_category'),
-
+    path('submit_case/<int:category_id>/', views.submit_case, name='submit_case'),
+    path('user', views.user_home, name='user_home'),
+    path('send_message/<int:case_id>/', views.send_message, name='send_message'),
 ]
