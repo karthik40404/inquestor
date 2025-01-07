@@ -8,7 +8,8 @@ class Client(models.Model):
     address = models.TextField(blank=True)
 
 class CaseCategory(models.Model):
-    c_name = models.CharField(max_length=100, unique=True)
+    c_name = models.CharField(max_length=100)
+    c_image = models.FileField(upload_to='categories/')
     description = models.TextField(blank=True)
 
 class Case(models.Model):
@@ -24,8 +25,7 @@ class Case(models.Model):
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Open')
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     assigned_agent = models.ForeignKey(
-        User, limit_choices_to={'is_staff': True}, on_delete=models.SET_NULL, null=True, blank=True
-    )
+        User, limit_choices_to={'is_staff': True}, on_delete=models.SET_NULL, null=True, blank=True)
     category = models.ForeignKey(CaseCategory, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -8,10 +8,12 @@
 </head>
 <body>
     <h1>Add Case Category</h1>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <label for="c_name">Category Name:</label>
         <input type="text" name="c_name" required><br>
+        <label for="c_image">Image:</label>
+        <input type="file" name="c_image" required><br>
         <label for="description">Description:</label>
         <textarea name="description" required></textarea><br>
         <button type="submit">Add Category</button>

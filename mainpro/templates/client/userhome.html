@@ -11,7 +11,7 @@
         body {
             background-color: #1a1a1a;
             color: #f8f9fa;
-            font-family: Arial, sans-serif;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         .categories-container {
@@ -26,6 +26,7 @@
             padding: 20px;
             text-align: center;
             transition: transform 0.3s, background 0.3s;
+            height: 500px;
         }
 
         .category-card:hover {
@@ -221,27 +222,39 @@
             border-top: 1px solid #444;
             padding-top: 10px;
             font-size: 14px;
-        }        
+        }    
+        .category-card img {
+            max-width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="text-center my-4">Welcome, {{ user.first_name }}</h1>
-        <p class="text-center">Select a category to submit your case:</p>
+        <h3 class="text-center">Select a category to submit your case:</h3>
         
         <!-- Case Categories Section -->
         <div class="categories-container row g-4">
-            {% for category in categories %}
+            {% for c in categories %}
             <div class="col-md-4">
                 <div class="category-card">
-                    <a href="{% url 'submit_case' category.id %}">
-                        <h3>{{ category.c_name }}</h3>
-                        <p>{{ category.description }}</p>
+                    <a href="{% url 'submit_case' c.id %}">
+                        <h3>{{ c.c_name }}</h3>
+                        {% if c.c_image %}
+                            <img src="{{ c.c_image.url }}" alt="{{ c.c_name }} image">
+                        {% else %}
+                            <p>No image available</p>
+                        {% endif %}
+                        <p>{{ c.description }}</p>
                     </a>
                 </div>
             </div>
             {% endfor %}
-        </div>
+        </div>        
     </div>
     <div class="container">
         <p class="text-center">Here is a list of available agents:</p>
