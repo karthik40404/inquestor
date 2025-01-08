@@ -206,21 +206,33 @@ def list_clients(req):
     })
 
 def agent_dashboard(req):
-    agent = Agent.objects.get(user=req.user)
+    # Get the agent associated with the current user, handle case where no agent is found
+    agent = Agent.objects.filter(user=req.user).first()
+    
+    if not agent:
+        # Use Django's messages module for error notification
+        messages.error(req, "Agent not found. Please check your account details.")
+        return redirect(agent_dashboard)  # Redirect to an error page or handle appropriately
+
+    # Get the cases assigned to this agent
     cases = Case.objects.filter(assigned_agent=req.user)
 
+
+    # Count the total, open, and closed cases
     total_cases = cases.count()
     open_cases = cases.filter(status='Open').count()
     closed_cases = cases.filter(status='Closed').count()
 
+    # Prepare cases data with associated chat messages
     cases_data = []
     for case in cases:
-        messages = ChatMessage.objects.filter(case=case)
+        case_messages = ChatMessage.objects.filter(case=case)  # Renamed 'messages' to 'case_messages'
         cases_data.append({
             'case': case,
-            'messages': messages,
+            'messages': case_messages,
         })
 
+    # Render the dashboard with the necessary data
     return render(req, 'agent/agent_dashboard.html', {
         'cases_data': cases_data,
         'total_cases': total_cases,
@@ -325,45 +337,29 @@ def user_home(req):
     return render(req, 'client/userhome.html', {'categories': categories,'agents': agents})
 
 def submit_case(req, category_id):
-    category = get_object_or_404(CaseCategory, id=category_id)
+    category = CaseCategory.objects.get(id=category_id)
     agents = Agent.objects.filter(is_active=True)
 
     if req.method == 'POST':
         description = req.POST.get('details')
         agent_id = req.POST.get('agent')
         agent = Agent.objects.filter(id=agent_id).first() if agent_id else None
-
-        print("Description:", description)
-        print("Agent:", agent)
-
-        # Check the evidence fields explicitly
         evidence_file = req.FILES.get('evidence')
-        print("Evidence file:", evidence_file)
-
-        if evidence_file:
-            print("File name:", evidence_file.name)
-            print("File size:", evidence_file.size)
-        else:
-            print("No file received.")
-
         evidence_description = req.POST.get('evidence_description')
 
-        print("Evidence file:", evidence_file)  # Log the file object
-        print("Evidence description:", evidence_description)  # Log the description
-        
-        # Check if the user is authenticated
+        # Ensure the user is logged in
         if not req.user.is_authenticated:
             messages.error(req, "You need to log in to submit a case.")
             return redirect('log')
 
-        try:
-            client = Client.objects.get(email=req.user.email)
-            print("Client found:", client)
-        except Client.DoesNotExist:
+        client = Client.objects.filter(email=req.user.email).first()
+        if not client:
             messages.error(req, "Client not found. Please check your account details.")
             return redirect('log')
 
-        if description and agent and client and evidence_file and evidence_description:
+        # Validate required fields
+        if description and agent and evidence_file and evidence_description:
+            # Create case
             case = Case.objects.create(
                 client=client,
                 assigned_agent=agent.user,
@@ -371,18 +367,15 @@ def submit_case(req, category_id):
                 description=description,
                 title=f"Case in {category.c_name}",
             )
-            
-            # Create Evidence object
-            evidence = Evidence.objects.create(
+
+            # Create Evidence
+            Evidence.objects.create(
                 case=case,
-                file=evidence_file,  # The file should be passed here
+                file=evidence_file,
                 description=evidence_description,
             )
 
-            # Debugging: Check if file path is being saved correctly
-            print("Evidence file path in the database:", evidence.file.name)
-
-            # Send email notification to the assigned agent
+            # Send email notification to the agent
             send_mail(
                 subject=f"New Case Assigned: {case.title}",
                 message=f"A new case has been assigned to you.\n\n"
@@ -398,17 +391,10 @@ def submit_case(req, category_id):
             messages.success(req, "Case submitted successfully. The agent has been notified.")
             return redirect('user_home')
         else:
-            error_message = "Please fill out all required fields."
-            return render(req, 'client/submitcase.html', {
-                'category': category,
-                'agents': agents,
-                'error_message': error_message,
-            })
+            messages.error(req, "Please fill out all required fields.")
+            return render(req, 'client/submitcase.html', {'category': category, 'agents': agents})
 
-    return render(req, 'client/submitcase.html', {
-        'category': category,
-        'agents': agents,
-    })
+    return render(req, 'client/submitcase.html', {'category': category, 'agents': agents})
 
     
 def chat_view(request, case_id):
@@ -464,3 +450,13 @@ def message(req):
           return redirect(contact_page)
     else:
         return render(req,'contact_page.html')
+    
+def agent_case_details(req, case_id):
+    case = get_object_or_404(Case, id=case_id)
+    if req.user != case.assigned_agent.user:
+        messages.error(req, "You do not have permission to view this case.")
+        return redirect('user_home')
+
+    return render(req, 'agent/case_details.html', {
+        'case': case
+    })

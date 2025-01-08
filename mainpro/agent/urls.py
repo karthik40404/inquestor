@@ -26,4 +26,5 @@ urlpatterns = [
     path('chat/<int:case_id>/', views.chat_view, name='chat_view'),
     path('send_message/<int:case_id>/', views.send_message, name='send_message'),
     path('agent/<int:agent_id>/', views.agent_profile, name='agent_profile'),
+    path('case-details/<int:case_id>/', views.agent_case_details, name='agent_case_details'),
 ]
