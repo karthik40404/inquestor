@@ -333,21 +333,35 @@ def submit_case(req, category_id):
         agent_id = req.POST.get('agent')
         agent = Agent.objects.filter(id=agent_id).first() if agent_id else None
 
-        # Ensure the user is authenticated
+        print("Description:", description)
+        print("Agent:", agent)
+
+        # Check the evidence fields explicitly
+        evidence_file = req.FILES.get('evidence')
+        print("Evidence file:", evidence_file)
+
+        if evidence_file:
+            print("File name:", evidence_file.name)
+            print("File size:", evidence_file.size)
+        else:
+            print("No file received.")
+
+        evidence_description = req.POST.get('evidence_description')
+
+        print("Evidence file:", evidence_file)  # Log the file object
+        print("Evidence description:", evidence_description)  # Log the description
+        
+        # Check if the user is authenticated
         if not req.user.is_authenticated:
             messages.error(req, "You need to log in to submit a case.")
             return redirect('log')
 
-        # Fetch the client using the email from the User model
         try:
-            client = Client.objects.get(email=req.user.email)  # Query directly for the email
+            client = Client.objects.get(email=req.user.email)
+            print("Client found:", client)
         except Client.DoesNotExist:
             messages.error(req, "Client not found. Please check your account details.")
             return redirect('log')
-
-
-        evidence_file = req.FILES.get('evidence')
-        evidence_description = req.POST.get('evidence_description')
 
         if description and agent and client and evidence_file and evidence_description:
             case = Case.objects.create(
@@ -357,13 +371,18 @@ def submit_case(req, category_id):
                 description=description,
                 title=f"Case in {category.c_name}",
             )
-            Evidence.objects.create(
+            
+            # Create Evidence object
+            evidence = Evidence.objects.create(
                 case=case,
-                file=evidence_file,
+                file=evidence_file,  # The file should be passed here
                 description=evidence_description,
             )
 
-            # Notify the agent
+            # Debugging: Check if file path is being saved correctly
+            print("Evidence file path in the database:", evidence.file.name)
+
+            # Send email notification to the assigned agent
             send_mail(
                 subject=f"New Case Assigned: {case.title}",
                 message=f"A new case has been assigned to you.\n\n"
@@ -375,9 +394,9 @@ def submit_case(req, category_id):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[agent.user.email],
             )
+
             messages.success(req, "Case submitted successfully. The agent has been notified.")
             return redirect('user_home')
-
         else:
             error_message = "Please fill out all required fields."
             return render(req, 'client/submitcase.html', {
@@ -386,7 +405,6 @@ def submit_case(req, category_id):
                 'error_message': error_message,
             })
 
-    # Handle GET request
     return render(req, 'client/submitcase.html', {
         'category': category,
         'agents': agents,

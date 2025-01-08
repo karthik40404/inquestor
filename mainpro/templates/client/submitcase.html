@@ -48,11 +48,6 @@
                 {% csrf_token %}
                 
                 <div class="mb-4">
-                    <label for="intro" class="form-label">Introduction:</label>
-                    <textarea name="intro" id="intro" class="form-control" rows="3" placeholder="Introduce the case" required></textarea>
-                </div>
-                
-                <div class="mb-4">
                     <label for="details" class="form-label">Case Details:</label>
                     <input type="text" name="details" id="details" class="form-control" placeholder="Describe the case details" required>
                 </div>
@@ -61,7 +56,7 @@
                     <label for="evidence" class="form-label">Evidence:</label>
                     <input type="file" name="evidence" id="evidence" class="form-control" required>
                     <input type="text" name="evidence_description" id="evidence_description" class="form-control mt-2" placeholder="Provide evidence description" required>
-                </div>
+                </div>                
 
                 <div class="mb-4">
                     <label for="agent" class="form-label">Assign to Agent:</label>
