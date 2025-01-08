@@ -329,28 +329,41 @@ def submit_case(req, category_id):
     agents = Agent.objects.filter(is_active=True)
 
     if req.method == 'POST':
-        description = req.POST.get('details') 
-        agent_id = req.POST.get('agent')  
+        description = req.POST.get('details')
+        agent_id = req.POST.get('agent')
         agent = Agent.objects.filter(id=agent_id).first() if agent_id else None
-        client = Client.objects.filter(user=req.user).first()  
-        
-        evidence_file = req.FILES.get('evidence') 
-        evidence_description = req.POST.get('evidence_description')  
+
+        # Ensure the user is authenticated
+        if not req.user.is_authenticated:
+            messages.error(req, "You need to log in to submit a case.")
+            return redirect('log')
+
+        # Fetch the client using the email from the User model
+        try:
+            client = Client.objects.get(email=req.user.email)  # Query directly for the email
+        except Client.DoesNotExist:
+            messages.error(req, "Client not found. Please check your account details.")
+            return redirect('log')
+
+
+        evidence_file = req.FILES.get('evidence')
+        evidence_description = req.POST.get('evidence_description')
 
         if description and agent and client and evidence_file and evidence_description:
             case = Case.objects.create(
                 client=client,
-                assigned_agent=agent.user, 
+                assigned_agent=agent.user,
                 category=category,
                 description=description,
                 title=f"Case in {category.c_name}",
             )
-            case.save()
             Evidence.objects.create(
                 case=case,
                 file=evidence_file,
                 description=evidence_description,
             )
+
+            # Notify the agent
             send_mail(
                 subject=f"New Case Assigned: {case.title}",
                 message=f"A new case has been assigned to you.\n\n"
@@ -363,8 +376,8 @@ def submit_case(req, category_id):
                 recipient_list=[agent.user.email],
             )
             messages.success(req, "Case submitted successfully. The agent has been notified.")
-            return redirect('user_home')  # Redirect to the user home page (update with your URL name)
-        
+            return redirect('user_home')
+
         else:
             error_message = "Please fill out all required fields."
             return render(req, 'client/submitcase.html', {
@@ -372,13 +385,13 @@ def submit_case(req, category_id):
                 'agents': agents,
                 'error_message': error_message,
             })
-    else:
-        error_message = None
-        return render(req, 'client/submitcase.html', {
-            'category': category,
-            'agents': agents,
-            'error_message': error_message,
-        })
+
+    # Handle GET request
+    return render(req, 'client/submitcase.html', {
+        'category': category,
+        'agents': agents,
+    })
+
     
 def chat_view(request, case_id):
     case = get_object_or_404(Case, id=case_id)

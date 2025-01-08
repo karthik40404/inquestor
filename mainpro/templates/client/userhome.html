@@ -230,10 +230,18 @@
             margin-top: 10px;
             margin-bottom: 10px;
         }
+        .logo {
+            display: block;
+            margin: 20px auto;
+            max-width: 300px;
+            height: auto;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <img class="logo" src="{% static 'img/inquestor.png' %}" alt="Website Logo">
         <h1 class="text-center my-4">Welcome, {{ user.first_name }}</h1>
         <h3 class="text-center">Select a category to submit your case:</h3>
         

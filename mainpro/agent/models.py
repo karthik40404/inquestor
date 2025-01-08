@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 class Client(models.Model):
     user = models.TextField()
     phone = models.CharField(max_length=15, blank=True)
+    email = models.TextField(blank=True)
     address = models.TextField(blank=True)
 
 class CaseCategory(models.Model):
