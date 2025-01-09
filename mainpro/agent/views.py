@@ -23,46 +23,39 @@ def landing_page(req):
 
 def log(req):
     # Redirect based on session roles
-    if 'admin' in req.session:
-        return redirect(admdash)  # Admin dashboard
-    if 'agent' in req.session:
-        return redirect(agent_dashboard)  # Agent dashboard
-    if 'user' in req.session:
-        return redirect(user_home)  # User home
+    if req.session.get('role') == 'admin':
+        return redirect(admdash)
+    if req.session.get('role') == 'agent':
+        return redirect(agent_dashboard)
+    if req.session.get('role') == 'user':
+        return redirect(user_home)
 
-    # Handle POST request for login
     if req.method == 'POST':
         email = req.POST['email']
         psw = req.POST['psw']
         data = authenticate(username=email, password=psw)
-        print(data)
 
         if data:
+            req.session.flush()  # Clear previous session
             login(req, data)
 
-            # Check roles and redirect accordingly
+            # Determine user role
             if data.is_superuser:
-                req.session['admin'] = email  # Set admin session
+                req.session['role'] = 'admin'
+                req.session['user_id'] = data.id
                 return redirect(admdash)
-
-            # Check if the user is an agent
-            try:
-                agent = Agent.objects.get(user=data)  # Assuming Agent model has a `user` ForeignKey
-                req.session['agent'] = email  # Set agent session
+            elif data.is_staff:
+                req.session['role'] = 'agent'
+                req.session['user_id'] = data.id
                 return redirect(agent_dashboard)
-            except Agent.DoesNotExist:
-                pass
-
-            # If neither admin nor agent, assume a regular user
-            req.session['user'] = email  # Set user session
-            return redirect(user_home)
-
+            else:
+                req.session['role'] = 'user'
+                req.session['user_id'] = data.id
+                return redirect(user_home)
         else:
-            # Authentication failed
             messages.warning(req, "Incorrect username or password.")
-            return redirect(log)
+            return render(req, 'login.html', {'error': 'Incorrect username or password.'})
 
-    # Render login page for GET request
     return render(req, 'login.html')
 
 def lout(req):
@@ -103,7 +96,7 @@ def add_agent(req):
         random_password = generate_random_password()
         
         # Create the user first
-        user = User.objects.create_user(username=username, email=email)
+        user = User.objects.create_user(username=username, email=email, is_staff=True)
         user.set_password(random_password) 
         user.save()
         
@@ -337,65 +330,57 @@ def user_home(req):
     return render(req, 'client/userhome.html', {'categories': categories,'agents': agents})
 
 def submit_case(req, category_id):
-    category = CaseCategory.objects.get(id=category_id)
+    category = get_object_or_404(CaseCategory, id=category_id)
     agents = Agent.objects.filter(is_active=True)
 
     if req.method == 'POST':
         description = req.POST.get('details')
         agent_id = req.POST.get('agent')
-        agent = Agent.objects.filter(id=agent_id).first() if agent_id else None
+        user_id = req.POST.get('user')
         evidence_file = req.FILES.get('evidence')
         evidence_description = req.POST.get('evidence_description')
 
-        # Ensure the user is logged in
         if not req.user.is_authenticated:
             messages.error(req, "You need to log in to submit a case.")
             return redirect('log')
 
-        client = Client.objects.filter(email=req.user.email).first()
-        if not client:
-            messages.error(req, "Client not found. Please check your account details.")
-            return redirect('log')
+        if description and agent_id and evidence_file and evidence_description:
+            try:
+                agent = get_object_or_404(Agent, id=agent_id)
+                user = get_object_or_404(User, id=user_id)
+                case = Case.objects.create(
+                    assigned_agent=agent.user,
+                    category=category,
+                    description=description,
+                    title=f"Case in {category.c_name}",
+                )
 
-        # Validate required fields
-        if description and agent and evidence_file and evidence_description:
-            # Create case
-            case = Case.objects.create(
-                client=client,
-                assigned_agent=agent.user,
-                category=category,
-                description=description,
-                title=f"Case in {category.c_name}",
-            )
+                Evidence.objects.create(
+                    case=case,
+                    file=evidence_file,
+                    description=evidence_description,
+                )
 
-            # Create Evidence
-            Evidence.objects.create(
-                case=case,
-                file=evidence_file,
-                description=evidence_description,
-            )
+                # Send email asynchronously in production
+                send_mail(
+                    subject=f"New Case Assigned: {case.title}",
+                    message=f"A new case has been assigned to you.\n\n"
+                            f"Category: {category.c_name}\n"
+                            f"Title: {case.title}\n"
+                            f"Description: {case.description}\n"
+                            f"Please log in for more details.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[agent.user.email],
+                )
 
-            # Send email notification to the agent
-            send_mail(
-                subject=f"New Case Assigned: {case.title}",
-                message=f"A new case has been assigned to you.\n\n"
-                        f"Category: {category.c_name}\n"
-                        f"Title: {case.title}\n"
-                        f"Description: {case.description}\n"
-                        f"Client: {client.user.username}\n\n"
-                        f"Please login to the system for more details.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[agent.user.email],
-            )
+                messages.success(req, "Case submitted successfully.")
+                return redirect('user_home')
 
-            messages.success(req, "Case submitted successfully. The agent has been notified.")
-            return redirect('user_home')
+            except Exception as e:
+                messages.error(req, "An error occurred while submitting the case.")
         else:
-            messages.error(req, "Please fill out all required fields.")
-            return render(req, 'client/submitcase.html', {'category': category, 'agents': agents})
-
+            messages.error(req, "All fields are required.")
     return render(req, 'client/submitcase.html', {'category': category, 'agents': agents})
-
     
 def chat_view(request, case_id):
     case = get_object_or_404(Case, id=case_id)
