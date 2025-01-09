@@ -22,7 +22,6 @@ def landing_page(req):
 
 
 def log(req):
-    # Redirect based on session roles
     if req.session.get('role') == 'admin':
         return redirect(admdash)
     if req.session.get('role') == 'agent':
@@ -76,7 +75,7 @@ def reg(req):
 def admdash(req):
     cases = Case.objects.all()
     agents = Agent.objects.all()
-    clients = Client.objects.all()
+    clients = User.objects.all()
     categories = CaseCategory.objects.all()
     return render(req, 'admin/admindash.html', {'cases': cases,'agents': agents,'clients': clients,'categories': categories,})
 
@@ -145,41 +144,6 @@ def add_case_category(req):
         return redirect(admdash) 
     return render(req, 'admin/add_case_category.html')
 
-def add_case(req):
-    if req.method == 'POST':
-        title = req.POST['title']
-        description = req.POST['description']
-        client_id = req.POST['client']
-        category_id = req.POST['category']
-        assigned_agent_id = req.POST['assigned_agent']
-        
-        # Fetch objects for client, category, and agent
-        client = Client.objects.get(id=client_id)
-        category = CaseCategory.objects.get(id=category_id)
-        agent = Agent.objects.get(id=assigned_agent_id) if assigned_agent_id else None
-        
-        # Create the case
-        case = Case.objects.create(
-            title=title,
-            description=description,
-            client=client,
-            assigned_agent=agent,
-            status='Open',
-            category=category
-        )
-        case.save()
-        messages.success(req, "Case added successfully!")
-        return redirect(admdash)  # Redirect back to the admin dashboard
-
-    clients = Client.objects.all()
-    agents = Agent.objects.all()
-    categories = CaseCategory.objects.all()
-    return render(req, 'admin/add_case.html', {
-        'clients': clients,
-        'agents': agents,
-        'categories': categories,
-    })
-
 def list_cases(req):
     cases = Case.objects.all()
     return render(req, 'admin/list_cases.html', {
@@ -193,7 +157,7 @@ def case_details(req, case_id):
     })
 
 def list_clients(req):
-    clients = Client.objects.all()
+    clients = User.objects.all()
     return render(req, 'admin/list_clients.html', {
         'clients': clients
     })
@@ -270,7 +234,7 @@ def add_client(req):
         user.save()
         
         # Create client profile
-        client = Client.objects.create(
+        client = User.objects.create(
             user=user,
             phone=phone,
             address=address
@@ -291,26 +255,6 @@ def update_case_status(req, case_id):
         return redirect(agent_dashboard)
     
     return render(req, 'agent/update_case_status.html', {
-        'case': case
-    })
-
-def add_evidence(request, case_id):
-    case = Case.objects.get(id=case_id)
-    
-    if request.method == 'POST':
-        file = request.FILES['file']
-        description = request.POST['description']
-        
-        evidence = Evidence.objects.create(
-            case=case,
-            file=file,
-            description=description
-        )
-        evidence.save()
-        messages.success(request, 'Evidence added successfully!')
-        return redirect('case_details', case_id=case.id)
-    
-    return render(request, 'agent/add_evidence.html', {
         'case': case
     })
 
@@ -354,13 +298,6 @@ def submit_case(req, category_id):
                     description=description,
                     title=f"Case in {category.c_name}",
                 )
-
-                Evidence.objects.create(
-                    case=case,
-                    file=evidence_file,
-                    description=evidence_description,
-                )
-
                 # Send email asynchronously in production
                 send_mail(
                     subject=f"New Case Assigned: {case.title}",
