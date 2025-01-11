@@ -105,14 +105,17 @@
                 <li>{{ case.title }} - <a href="{% url 'case_details' case.id %}">View Details</a></li>
             {% endfor %}
         </ul>
-        <a href="{% url 'add_case' %}">Add New Case</a>
     </div>
 
     <div>
         <h2>Manage Agents</h2>
         <ul>
             {% for agent in agents %}
-                <li>{{ agent.user.username }} - {{ agent.phone }}</li>
+                <li>{{ agent.user.username }} - {{ agent.phone }}
+                    {% if user.is_staff %}
+                        <a href="{% url 'delete_agent' agent.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this agent?');">Delete</a>
+                    {% endif %}
+                </li>
             {% endfor %}
         </ul>
         <a href="{% url 'add_agent' %}">Add New Agent</a>
@@ -125,14 +128,13 @@
                 <li>{{ client.user.username }} - {{ client.phone }}</li>
             {% endfor %}
         </ul>
-        <a href="{% url 'add_client' %}">Add New Client</a>
     </div>
 
     <div>
         <h2>Manage Categories</h2>
         <ul>
             {% for category in categories %}
-                <li>{{ category.c_name }} - {{ category.description }}</li>
+                <li>{{ category.c_name }} - {{ category.c_disc }}</li>
             {% endfor %}
         </ul>
         <a href="{% url 'add_case_category' %}">Add New Category</a>

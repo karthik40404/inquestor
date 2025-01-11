@@ -5,11 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .chat-history {
+            border: 1px solid #ddd;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            margin-top: 20px;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+        }
+
+        .chat-message strong {
+            color: #007bff;
+        }
+
+        .chat-message p {
+            margin: 5px 0;
+        }
+
+        .chat-input input {
+            width: 85%;
+            display: inline-block;
+        }
+
+        .chat-input button {
+            width: 13%;
+            display: inline-block;
+        }
+
+    </style>
 </head>
 <body>
     <div class="container">
         <h1 class="my-4">Agent Dashboard</h1>
-        <h1 class="text-center my-4">Welcome, {{ agent.username }}</h1>
+        <h1 class="text-center my-4">Welcome, {{ agent.user.username }}</h1>
 
         <div class="row">
             <div class="col-md-4">
@@ -22,7 +55,10 @@
                 </div>
             </div>
         </div>
-        <a href="../../logout/">logout</a>
+
+        <a href="../../change-password/">Change Password</a> |
+        <a href="../../logout/">Logout</a>
+
         <div class="row">
             {% for data in cases_data %}
                 <div class="col-md-4">
@@ -31,15 +67,22 @@
                             <h4>{{ data.case.title }}</h4>
                         </div>
                         <div class="card-body">
-                            <p>{{ data.case.description }}</p>
+                            <p>{{ data.case.case_detail }}</p>
                             <div class="chat-body">
-                                {% for message in data.messages %}
-                                    <div>{{ message.sender.username }}: {{ message.message }}</div>
+                                {% for message in data.chat_messages %}
+                                    <div class="chat-message">
+                                        <strong>{{ message.sender.username }}:</strong>
+                                        <p>{{ message.message }}</p>
+                                        <small>{{ message.timestamp }}</small>
+                                    </div>
                                 {% endfor %}
                             </div>
                             <div class="chat-input mt-3">
-                                <input type="text" id="chatMessage_{{ data.case.id }}" class="form-control" placeholder="Type your message...">
-                                <button class="btn btn-primary mt-2 send-chat" data-case-id="{{ data.case.id }}">Send</button>
+                                <form method="POST" action="{% url 'send_message' data.case.id %}">
+                                    {% csrf_token %}
+                                    <input type="text" name="message" class="form-control" placeholder="Type your message..." required>
+                                    <button type="submit" class="btn btn-primary mt-2">Send</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -49,34 +92,5 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const csrfToken = '{{ csrf_token }}';
-
-        document.querySelectorAll('.send-chat').forEach(button => {
-            button.addEventListener('click', function() {
-                const caseId = this.getAttribute('data-case-id');
-                const messageContent = document.getElementById('chatMessage_' + caseId).value.trim();
-
-                if (messageContent) {
-                    fetch(`/send_message/${caseId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({ message: messageContent })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            const newMessage = document.createElement('div');
-                            newMessage.textContent = `You: ${data.message}`;
-                            document.querySelector(`#chatMessage_${caseId}`).value = '';
-                        }
-                    });
-                }
-            });
-        });
-    </script>
 </body>
 </html>

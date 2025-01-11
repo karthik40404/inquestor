@@ -257,7 +257,7 @@
                         {% else %}
                             <p>No image available</p>
                         {% endif %}
-                        <p>{{ c.description }}</p>
+                        <p>{{ c.c_disc }}</p>
                     </a>
                 </div>
             </div>
@@ -271,7 +271,7 @@
             {% for agent in agents %}
             <div class="col-md-4">
                 <div class="agent-card">
-                    <a href="{% url 'agent_profile' agent.id %}">
+                    <a href="{% url 'agent_profile' agent.id %}">View Case</a>
                         <h3>{{ agent.user.username }}</h3>
                         <p>{{ agent.user.email }}</p>
                     </a>
@@ -280,19 +280,7 @@
             {% endfor %}
         </div>
     </div>
-    <!-- Chat Box -->
-    <div class="chat-box-wrapper">
-        <div class="chat-box">
-            <div class="chat-header">Live Chat</div>
-            <div class="chat-body">
-                <div class="message">Welcome to support! How can we help you?</div>
-            </div>
-            <div class="chat-input">
-                <input type="text" id="chatMessage" placeholder="Type your message...">
-                <button id="sendChat">Send</button>
-            </div>
-        </div>
-    </div>    
+    
     <footer class="footer">
         <div class="container">
             <div class="row">
@@ -337,31 +325,6 @@
     </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const chatBody = document.querySelector('.chat-body');
-        const chatInput = document.getElementById('chatMessage');
-        const sendChat = document.getElementById('sendChat');
 
-        sendChat.addEventListener('click', () => {
-            const message = chatInput.value.trim();
-            if (message) {
-                const userMessage = document.createElement('div');
-                userMessage.textContent = message;
-                userMessage.classList.add('message', 'user');
-                chatBody.appendChild(userMessage);
-
-                setTimeout(() => {
-                    const supportMessage = document.createElement('div');
-                    supportMessage.textContent = "Thank you for your message. We'll get back to you shortly.";
-                    supportMessage.classList.add('message');
-                    chatBody.appendChild(supportMessage);
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }, 1000);
-
-                chatInput.value = '';
-                chatBody.scrollTop = chatBody.scrollHeight;
-            }
-        });
-    </script>
 </body>
 </html>

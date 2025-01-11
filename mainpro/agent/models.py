@@ -11,9 +11,13 @@ class Agent(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     name=models.CharField(max_length=50)
     email=models.EmailField()
+    phone = models.CharField(max_length=15)
+    address = models.TextField(default="Not provided")
     password=models.TextField()
+    is_active = models.BooleanField(default=True)
 
 class Case(models.Model):
+    title = models.CharField(max_length=250)
     case_detail = models.TextField()
     evidence = models.FileField(upload_to='evidence/', null=True, blank=True)
     evidence_details = models.TextField(null=True, blank=True)
@@ -34,7 +38,7 @@ class Case(models.Model):
     address = models.TextField(null=True, blank=True)
 
 class ChatMessage(models.Model):
-    case = models.ForeignKey('Case', on_delete=models.CASCADE, related_name='chat_messages')
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name='chat_messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)

@@ -1,24 +1,124 @@
-<!-- add_agent.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Agent</title>
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
+
+        .messages p {
+            margin: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="email"] {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        input[type="text"]:focus, input[type="email"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+
+        button {
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
-    <h1>Add Agent</h1>
-    <form method="POST">
-        {% csrf_token %}
-        <label for="username">Username:</label>
-        <input type="text" name="username" required><br>
-        <label for="email">Email:</label>
-        <input type="email" name="email" required><br>
-        <label for="phone">Phone:</label>
-        <input type="text" name="phone" required><br>
-        <label for="address">Address:</label>
-        <input type="text" name="address" required><br>
-        <button type="submit">Add Agent</button>
-    </form>
+    <div class="container">
+        <h1>Add Agent</h1>
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <form method="POST">
+            {% csrf_token %}
+            <label for="username">Username:</label>
+            <input type="text" name="username" required placeholder="Enter username">
+            <label for="email">Email:</label>
+            <input type="email" name="email" required placeholder="Enter email">
+            <label for="phone">Phone:</label>
+            <input type="text" name="phone" required placeholder="Enter phone number">
+            <label for="address">Address:</label>
+            <input type="text" name="address" required placeholder="Enter address">
+            <button type="submit">Add Agent</button>
+        </form>
+    </div>
 </body>
 </html>
