@@ -37,13 +37,13 @@ class Case(models.Model):
     contact_no = models.CharField(max_length=15, null=True, blank=True)
     address = models.TextField(null=True, blank=True)
 
-class ChatMessage(models.Model):
-    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name='chat_messages')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
 class Message(models.Model):
     name=models.TextField()
     email=models.EmailField()
     message=models.TextField()
+
+class Chat(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    case = models.ForeignKey(Case, on_delete=models.CASCADE)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)

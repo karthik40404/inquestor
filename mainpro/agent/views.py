@@ -200,7 +200,7 @@ def agent_dashboard(req):
     # Fetch chat messages for all the agent's cases
     cases_data = []
     for case in cases:
-        chat_messages = ChatMessage.objects.filter(case=case).order_by('timestamp')
+        chat_messages = Chat.objects.filter(case=case).order_by('timestamp')
         cases_data.append({
             'case': case,
             'chat_messages': chat_messages,
@@ -327,13 +327,13 @@ def submit_case(req, category_id):
     
 def chat_case(request, case_id):
     case = get_object_or_404(Case, id=case_id)  # Use get_object_or_404 for better error handling
-    chat_messages = ChatMessage.objects.filter(case=case).order_by('timestamp')
+    chat_messages = Chat.objects.filter(case=case).order_by('timestamp')
 
     if request.method == 'POST':
         message = request.POST.get('message')
         if message:
             sender = request.user
-            ChatMessage.objects.create(
+            Chat.objects.create(
                 case=case,
                 sender=sender,
                 message=message
@@ -352,7 +352,7 @@ def send_message(req, case_id):
     if req.method == 'POST' and req.user.is_authenticated:
         message_content = req.POST.get('message')
         if message_content:
-            ChatMessage.objects.create(
+            Chat.objects.create(
                 case=case,
                 sender=req.user,
                 message=message_content,
@@ -368,7 +368,7 @@ def agent_profile(req, agent_id):
     # Fetch chat messages for each case and add it to the context
     cases_data = []
     for case in cases:
-        chat_messages = ChatMessage.objects.filter(case=case).order_by('timestamp')
+        chat_messages = Chat.objects.filter(case=case).order_by('timestamp')
         cases_data.append({
             'case': case,
             'chat_messages': chat_messages,
