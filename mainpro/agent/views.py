@@ -129,26 +129,24 @@ def add_agent(req):
     return render(req, 'admin/add_agent.html')
 
 def delete_agent(req, agent_id):
-    # Ensure that the user is an admin
     if not req.user.is_staff:
         messages.error(req, "You do not have permission to delete an agent.")
-        return redirect('admin_dashboard')  # Redirect to the admin dashboard if no permission
+        return redirect('admin_dashboard')  
     
     agent = get_object_or_404(Agent, id=agent_id)
     
-    # Delete the agent and associated user if necessary
-    user = agent.user  # Assuming there's a related user model for agent
-    agent.delete()  # Delete the agent
-    user.delete()  # Delete the user account if needed
+    user = agent.user  
+    agent.delete()  
+    user.delete() 
 
     messages.success(req, f'Agent {agent.user.username} has been deleted successfully.')
     return redirect(admdash)
 
 def add_case_category(req):
     if req.method == 'POST':
-        c_name = req.POST.get('c_name')  # Using .get() to avoid KeyError if the field is missing
-        c_image = req.FILES.get('c_image')  # Accessing file data
-        c_disc = req.POST.get('c_disc')  # Using .get() for safety
+        c_name = req.POST.get('c_name')  
+        c_image = req.FILES.get('c_image') 
+        c_disc = req.POST.get('c_disc')  
 
         # Check if the required fields are present
         if c_name and c_image and c_disc:
@@ -178,12 +176,6 @@ def list_cases(req):
         'cases': cases
     })
 
-def case_details(req, case_id):
-    case = get_object_or_404(Case, id=case_id)
-    return render(req, 'admin/case_details.html', {
-        'case': case
-    })
-
 def list_clients(req):
     clients = User.objects.all()
     return render(req, 'admin/list_clients.html', {
@@ -191,22 +183,13 @@ def list_clients(req):
     })
 
 def agent_dashboard(req):
-    # Get the agent associated with the current user
     agent = Agent.objects.filter(user=req.user).first()
-
-    # Get cases associated with this agent
     cases = Case.objects.filter(agent=agent)
 
-    # Fetch chat messages for all the agent's cases
     cases_data = []
     for case in cases:
-        chat_messages = Chat.objects.filter(case=case).order_by('timestamp')
-        cases_data.append({
-            'case': case,
-            'chat_messages': chat_messages,
-        })
+        cases_data.append({'case': case,})
 
-    # Count the total, open, and closed cases
     total_cases = cases.count()
     open_cases = cases.filter(status='Open').count()
     closed_cases = cases.filter(status='Closed').count()
@@ -216,49 +199,52 @@ def agent_dashboard(req):
         'total_cases': total_cases,
         'open_cases': open_cases,
         'closed_cases': closed_cases,
-        'agent': agent,  # You can use 'agent' directly, no need for req.user here
+        'agent': agent,  
     })
 
 def change_password(req):
     if req.method == 'POST':
-        current_password = req.POST.get('current_password')  # Use .get() instead of direct access
+        current_password = req.POST.get('current_password')  
         new_password = req.POST.get('new_password')
         confirm_password = req.POST.get('confirm_password')
 
-        # Ensure that new password and confirm password match
         if new_password != confirm_password:
             messages.error(req, "New passwords do not match.")
-            return redirect('change_password')  # Replace with the actual name of your URL pattern
+            return redirect('change_password')  
 
-        # Authenticate the user with current password
         user = authenticate(req, username=req.user.username, password=current_password)
         if user is not None:
-            # If user is authenticated, set the new password
+            
             user.set_password(new_password)
             user.save()
 
-            # Keep the user logged in with the updated password
+           
             update_session_auth_hash(req, user)
             messages.success(req, "Your password has been changed successfully!")
-            return redirect('agent_dashboard')  # Replace with the actual URL name for the agent dashboard
+            return redirect('agent_dashboard')  
         else:
             messages.error(req, "Current password is incorrect.")
-            return redirect('change_password')  # Redirect back to the password change page
+            return redirect('change_password')  
     return render(req, 'agent/change_password.html')
 
 def update_case_status(req, case_id):
-    case = get_object_or_404(Case, id=case_id)
-    
-    if req.method == 'POST':
-        status = req.POST['status']
-        case.status = status
-        case.save()
-        messages.success(req, 'Case status updated successfully!')
+    if not req.user.is_authenticated:
+        messages.error(req, "You need to log in to update case status.")
         return redirect(agent_dashboard)
-    
-    return render(req, 'agent/update_case_status.html', {
-        'case': case
-    })
+
+    case = get_object_or_404(Case, id=case_id)
+
+    if req.method == 'POST':
+        new_status = req.POST.get('status')
+        if new_status in ['Open', 'In Progress', 'Closed']:
+            case.status = new_status
+            case.save()
+            messages.success(req, f"Case status updated to '{new_status}'.")
+            return redirect('agent_case_details', case_id=case.id)
+        else:
+            messages.error(req, "Invalid status selected.")
+
+    return render(req, 'agent/update_case_status.html', {'case': case})
 
 def cases_by_category(req, category_id):
     category = get_object_or_404(CaseCategory, id=category_id)
@@ -324,54 +310,15 @@ def submit_case(req, category_id):
         else:
             messages.error(req, "All fields are required.") 
     return render(req, 'client/submitcase.html', {'category': category, 'agents': agents})
-    
-def chat_case(request, case_id):
-    case = get_object_or_404(Case, id=case_id)  # Use get_object_or_404 for better error handling
-    chat_messages = Chat.objects.filter(case=case).order_by('timestamp')
-
-    if request.method == 'POST':
-        message = request.POST.get('message')
-        if message:
-            sender = request.user
-            Chat.objects.create(
-                case=case,
-                sender=sender,
-                message=message
-            )
-            # After sending the message, redirect to the same page to avoid resubmission on refresh
-            return redirect('chat_case', case_id=case.id)
-
-    return render(request, 'chat_case.html', {
-        'case': case,
-        'chat_messages': chat_messages,
-    })
-
-def send_message(req, case_id):
-    case = get_object_or_404(Case, id=case_id)
-    
-    if req.method == 'POST' and req.user.is_authenticated:
-        message_content = req.POST.get('message')
-        if message_content:
-            Chat.objects.create(
-                case=case,
-                sender=req.user,
-                message=message_content,
-            )
-            return redirect(agent_dashboard)  # Redirect to the same page or case page
-
-    return redirect(agent_dashboard)
 
 def agent_profile(req, agent_id):
     agent = get_object_or_404(Agent, id=agent_id)
     cases = Case.objects.filter(agent=agent)
-
-    # Fetch chat messages for each case and add it to the context
+    
     cases_data = []
     for case in cases:
-        chat_messages = Chat.objects.filter(case=case).order_by('timestamp')
         cases_data.append({
             'case': case,
-            'chat_messages': chat_messages,
         })
 
     return render(req, 'agent/agent_profile.html', {
@@ -403,3 +350,6 @@ def agent_case_details(req, case_id):
     return render(req, 'agent/case_details.html', {
         'case': case
     })
+
+def service(req):
+    return render(req,'service.html')

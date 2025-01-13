@@ -4,27 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Case Details</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: 'Courier New', Courier, monospace; /* Detective-style font */
+            background-color: #1c1c1c; /* Dark background */
+            color: #eaeaea; /* Light text */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Container and Header Styling */
+        .container {
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #f4e04d; /* Golden text for title */
+            text-shadow: 2px 2px #000; /* Subtle shadow */
+        }
+
+        .my-4 {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Case Detail Card */
+        .case-detail-card {
+            background-color: #2d2d2d; /* Dark gray card background */
+            border: 1px solid #444; /* Subtle border */
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+            color: #eaeaea;
+            overflow: hidden;
+        }
+
+        .case-detail-card .card-header {
+            background-color: #3c3c3c; /* Slightly darker header */
+            border-bottom: 1px solid #555; /* Border for separation */
+            color: #f4e04d; /* Golden header text */
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .case-detail-card .card-body p {
+            margin: 10px 0;
+            font-size: 1rem;
+            color: #d3d3d3; /* Muted text */
+        }
+
+        .case-detail-card .card-footer {
+            background-color: #3c3c3c; /* Footer background */
+            text-align: right;
+            border-top: 1px solid #555; /* Border for separation */
+        }
+
+        /* Links and Buttons */
+        a {
+            text-decoration: none;
+            color: #f4e04d; /* Golden links */
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #ffc107; /* Lighter golden hover */
+        }
+
+        .btn-primary {
+            background-color: #5a5a5a; /* Dark gray button */
+            border: none;
+            color: #f4e04d; /* Golden text */
+        }
+
+        .btn-primary:hover {
+            background-color: #3c3c3c; /* Darker button on hover */
+            color: #ffffff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .card-header {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h3 class="text-primary">Case Details</h3>
-
-        <div class="card mt-4">
+    <div class="container">
+        <h1 class="my-4 text-center">Case Details</h1>
+        
+        <div class="card case-detail-card">
+            <div class="card-header">
+                <h3>{{ case.title }}</h3>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">{{ case.title }}</h5>
-                <p><strong>Category:</strong> {{ case.category.c_name }}</p>
-                <p><strong>Description:</strong> {{ case.description }}</p>
-                <p><strong>Evidence:</strong> {{ case.evidence_set.first.description }}</p>
-                <p><strong>Client:</strong> {{ case.client.user.username }}</p>
-                <p><strong>Assigned Agent:</strong> {{ case.assigned_agent.user.username }}</p>
-
-                {% if case.evidence_set.first %}
-                    <h6>Evidence File:</h6>
-                    <a href="{{ case.evidence_set.first.file.url }}" target="_blank">View Evidence</a>
-                {% endif %}
+                <p><strong>Submitted By:</strong> {{ case.user.username }} ({{ case.user.email }})</p>
+                <p><strong>Category:</strong> {{ case.case_category.c_name }}</p>
+                <p><strong>Description:</strong> {{ case.case_detail }}</p>
+                <p><strong>Evidence Description:</strong> {{ case.evidence_details }}</p>
+                <p>
+                    <strong>Evidence File:</strong> 
+                    <a href="{{ case.evidence.url }}" download>Download Evidence</a>
+                </p>
+                <p><strong>Assigned Agent:</strong> {{ case.agent.user.username }} ({{ case.agent.user.email }})</p>
+                <p><strong>Status:</strong> {{ case.status }}</p>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'agent_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

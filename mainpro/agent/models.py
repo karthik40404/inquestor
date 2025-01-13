@@ -42,8 +42,3 @@ class Message(models.Model):
     email=models.EmailField()
     message=models.TextField()
 
-class Chat(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    case = models.ForeignKey(Case, on_delete=models.CASCADE)
-    message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)

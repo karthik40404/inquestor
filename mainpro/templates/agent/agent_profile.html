@@ -71,57 +71,10 @@
     <div class="card mb-4">
         <div class="card-body">
             <h4 class="card-title">{{ agent.user.first_name }} {{ agent.user.last_name }}</h4>
-            <p class="card-text">Email: {{ agent.user.email }}</p>
             <p class="card-text">Username: {{ agent.user.username }}</p>
-            <p class="card-text">Assigned Cases: {{ cases.count }}</p>
+            <p class="card-text">Email: {{ agent.user.email }}</p>
         </div>
     </div>
-
-    <h3>Assigned Cases</h3>
-    {% if cases %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">Case Title</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Chat</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for case in cases %}
-                    <tr>
-                        <td>{{ case.title }}</td>
-                        <td>{{ case.get_status_display }}</td>
-                        <td>{{ case.category.c_name }}</td>
-                        <td><a href="{% url 'chat_case' case.id %}">Open Chat</a></td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p class="no-cases">No cases assigned to this agent yet.</p>
-    {% endif %}
-
-    <h3>Chat with Agent</h3>
-    {% for case in cases %}
-        <h4>{{ case.title }}</h4>
-        <div class="chat-history">
-            {% for message in case.chat_messages.all %}
-                <div class="chat-message">
-                    <strong>{{ message.sender.username }}:</strong>
-                    <p>{{ message.message }}</p>
-                    <small>{{ message.timestamp }}</small>
-                </div>
-            {% endfor %}
-        </div>
-        <form method="POST" action="">
-            {% csrf_token %}
-            <input type="hidden" name="case_id" value="{{ case.id }}"> <!-- Include the case_id -->
-            <textarea name="message" class="form-control" placeholder="Enter your message..." required></textarea>
-            <button type="submit" class="btn btn-primary mt-2">Send</button>
-        </form>
-    {% endfor %}
     <a href="{% url 'user_home' %}" class="btn btn-secondary mt-3">Back to User Home</a>
 </div>
 
