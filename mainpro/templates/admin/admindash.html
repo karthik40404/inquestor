@@ -99,15 +99,6 @@
 <body>
     <h1>Admin Dashboard</h1>
     <div>
-        <h2>Manage Cases</h2>
-        <ul>
-            {% for case in cases %}
-                <li>{{ case.title }} - <a href="{% url 'case_details' case.id %}">View Details</a></li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div>
         <h2>Manage Agents</h2>
         <ul>
             {% for agent in agents %}
@@ -119,15 +110,6 @@
             {% endfor %}
         </ul>
         <a href="{% url 'add_agent' %}">Add New Agent</a>
-    </div>
-
-    <div>
-        <h2>Manage Clients</h2>
-        <ul>
-            {% for client in clients %}
-                <li>{{ client.user.username }} - {{ client.phone }}</li>
-            {% endfor %}
-        </ul>
     </div>
 
     <div>
